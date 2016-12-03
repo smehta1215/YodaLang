@@ -54,7 +54,8 @@ class YodaLang {
   var lines = new HashMap[Int, YodaLine];
   val variables = new Variables;
   var functionLines = new HashMap[String, Int];
-  var retStack = Stack[Any]();
+  var retStack = Stack[String]();
+  var retAnswers = Stack[Any]();
   var memorySpot = Stack[Int]();
 
   // Evaluates all instructions (runtime) with call Go
@@ -379,50 +380,63 @@ class YodaLang {
 
       case FunctionReturn(v: Any) => {
         v match {
-          case v: Function0[Any] => retStack.push(v());
+          case v: Function0[Any] => retAnswers.push(v());
           // Need to check if string is actually an existing variable
-          case v: String         => retStack.push(extractVal(v));
-          case v                 => retStack.push(v);
+          case v: String         => retAnswers.push(parseForVar(v));
+          case v                 => retAnswers.push(v);
         }
 
-        var jump: Int = line;
-        while (!lines(jump).isInstanceOf[FunctionEnd]) {
-          jump += 1;
+        var inc: Int = 0;
+        while (!lines(line + inc).isInstanceOf[FunctionEnd]) {
+          inc += 1;
         }
-        gotoLine(jump + 1);
+        if (lines(line + inc + 1).isInstanceOf[FunctionEnd]) {
+          println("YES");
+        }
+        gotoLine(line + inc + 1);
       }
 
       case FunctionCall(fn: String, num: Int) => {
-        retStack.push(None);
-        memorySpot.push(line + 1);
+        println("hit");
+
         variables.setDepth(variables.getDepth() + 1);
         variables.createScope();
-
-        var z: Int = functionLines.get(fn) match {
-          case Some(a) => a + 1;
-          case None    => -1; // fn doesn't exist
+        if (functionLines.contains(fn)) {
+          println(functionLines(fn));
+          gotoLine(functionLines(fn) + 1);
+        } else {
+          println("PROGRAM ERROR");
         }
-        gotoLine(z);
       }
 
       case FunctionCall(fn: String, v: String) => {
+
         retStack.push(v);
-        memorySpot.push(line + 1);
         variables.setDepth(variables.getDepth() + 1);
         variables.createScope();
-
-        var z: Int = functionLines.get(fn) match {
-          case Some(a) => a + 1;
-          case None    => -1; // fn doesn't exist
+        if (functionLines.contains(fn)) {
+          gotoLine(functionLines(fn) + 1);
+        } else {
+          println("PROGRAM ERROR");
         }
-        gotoLine(z);
       }
 
-      case FunctionEnd(_) => {
-        val ret: Any = retStack.pop();
+      case FunctionEnd(z: Int) => {
+        println("hit2");
+
+        var g: Int = memorySpot.pop();
+
+        val retVal: Any = retAnswers.pop();
         variables.removeScope(variables.getDepth());
-        
-        
+        variables.setDepth(variables.getDepth() - 1);
+
+        if (!retStack.isEmpty) {
+          var setVar: String = retStack.pop();
+          variables.getScope(setVar)(setVar) = retVal;
+        }
+
+        println(g);
+        gotoLine(g);
       }
 
       case End(_) => {};
@@ -578,22 +592,22 @@ class YodaLang {
   // Handles function creation, ending and return
   object Start {
     def training(s: String) = {
-      functionLines += s -> lineNumber;
+      functionLines += s -> (lineNumber + 1);
       lines(lineNumber) = FunctionStart(lineNumber, s);
       lineNumber += 1;
       LineTermination;
     }
   }
 
-  object Return {
-    def apply(r: Any) = {
+  object Give {
+    def back(r: Any) = {
       lines(lineNumber) = FunctionReturn(r);
       lineNumber += 1;
       LineTermination;
     }
   }
 
-  object End {
+  object Stop {
     def your(t: TrainingWord) = {
       lines(lineNumber) = FunctionEnd(lineNumber);
       lineNumber += 1;
@@ -617,6 +631,7 @@ class YodaLang {
     def pull(fn: String) = {
       lines(lineNumber) = FunctionCall(fn, lineNumber);
       lineNumber += 1;
+      memorySpot.push(lineNumber);
       LineTermination;
     }
     // Make function arguments work for Int/Double as well
