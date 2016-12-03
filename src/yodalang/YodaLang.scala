@@ -26,6 +26,11 @@ class YodaLang {
   case class ElseMarker(num: Int, b: Boolean = false) extends YodaLine;
   case class CloseIfExpression(num: Int) extends YodaLine;
 
+  // These handle loops
+  case class SpinExpression(num: Int) extends YodaLine;
+  case class AgainExpression(num: Int) extends YodaLine;
+  case class StopExpression(num: Int) extends YodaLine;
+
   // Variable assignment
   case class Assign(num: Int, fn: Function0[Any]) extends YodaLine;
 
@@ -342,6 +347,19 @@ class YodaLang {
         gotoLine(line + 1);
       }
 
+      case SpinExpression(_) => {
+        loopStack.push(line);
+        gotoLine(line + 1);
+      }
+
+      case AgainExpression(_) => {
+        gotoLine(loopStack.pop());
+      }
+
+      case StopExpression(_) => {
+        gotoLine(afterLoopStack.pop());
+      }
+
       case End(_) => {};
     }
   }
@@ -407,6 +425,20 @@ class YodaLang {
   abstract sealed class PathWord;
   object path extends PathWord;
 
+  // Marks the use of word "balance"
+  abstract sealed class BalanceWord;
+  object balance extends BalanceWord;
+
+  // Marks the use of the words "Learned" & "Unlearned"
+  abstract sealed class LearnedWord;
+  object learned extends LearnedWord;
+  abstract sealed class UnlearnWord;
+  object unlearn extends UnlearnWord;
+
+  // Marks the use of the word "padawan"
+  abstract sealed class PadawanWord;
+  object padawan extends PadawanWord;
+
   // Starts YodaLang program
   object Begin {
     def we(w: WillWord) = {
@@ -424,7 +456,7 @@ class YodaLang {
     }
   }
 
-  // Start of if statement with keyword "Consider"
+  // Start of if statement with keyword "Jedi path"
   object Jedi {
     def path(s: Function0[Boolean]) = {
       lines(lineNumber) = IfExpression(lineNumber, s);
@@ -436,15 +468,42 @@ class YodaLang {
     }
   }
 
-  def Close = {
-    lines(lineNumber) = CloseIfExpression(lineNumber);
-    lineNumber += 1;
-    LineTermination;
+  object Restore {
+    def the(b: BalanceWord) = {
+      lines(lineNumber) = CloseIfExpression(lineNumber);
+      lineNumber += 1;
+      LineTermination;
+    }
   }
 
-  def Sith(p: PathWord) {
-    lines(lineNumber) = ElseMarker(lineNumber);
-    lineNumber += 1;
+  object Take {
+    def Sith(p: PathWord) = {
+      lines(lineNumber) = ElseMarker(lineNumber);
+      lineNumber += 1;
+    }
+  }
+
+  // Handles loops and break statement
+  object What {
+    def you(l: LearnedWord) = {
+      lines(lineNumber) = SpinExpression(lineNumber);
+      lineNumber += 1;
+    }
+  }
+
+  object You {
+    def must(u: UnlearnWord) = {
+      afterLoopStack.push(lineNumber + 1);
+      lines(lineNumber) = AgainExpression(lineNumber);
+      lineNumber += 1;
+    }
+  }
+
+  object Patience {
+    def young(p: PadawanWord) = {
+      lines(lineNumber) = StopExpression(lineNumber);
+      lineNumber += 1;
+    }
   }
 
   object LineTermination {
