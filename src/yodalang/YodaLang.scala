@@ -386,24 +386,19 @@ class YodaLang {
           case v                 => retAnswers.push(v);
         }
 
-        var inc: Int = 0;
-        while (!lines(line + inc).isInstanceOf[FunctionEnd]) {
-          inc += 1;
+        var jump = line
+        while (!lines(jump).isInstanceOf[FunctionEnd]) {
+          jump += 1
         }
-        if (lines(line + inc + 1).isInstanceOf[FunctionEnd]) {
-          println("YES");
-        }
-        gotoLine(line + inc + 1);
+        gotoLine(jump);
       }
 
       case FunctionCall(fn: String, num: Int) => {
-        println("hit");
 
         variables.setDepth(variables.getDepth() + 1);
         variables.createScope();
         if (functionLines.contains(fn)) {
-          println(functionLines(fn));
-          gotoLine(functionLines(fn) + 1);
+          gotoLine(functionLines(fn));
         } else {
           println("PROGRAM ERROR");
         }
@@ -415,15 +410,13 @@ class YodaLang {
         variables.setDepth(variables.getDepth() + 1);
         variables.createScope();
         if (functionLines.contains(fn)) {
-          gotoLine(functionLines(fn) + 1);
+          gotoLine(functionLines(fn));
         } else {
           println("PROGRAM ERROR");
         }
       }
 
-      case FunctionEnd(z: Int) => {
-        println("hit2");
-
+      case FunctionEnd(num: Int) => {
         var g: Int = memorySpot.pop();
 
         val retVal: Any = retAnswers.pop();
@@ -435,7 +428,6 @@ class YodaLang {
           variables.getScope(setVar)(setVar) = retVal;
         }
 
-        println(g);
         gotoLine(g);
       }
 
@@ -638,6 +630,7 @@ class YodaLang {
     def pull(fn: String, ret: String) = {
       lines(lineNumber) = FunctionCall(fn, ret);
       lineNumber += 1;
+      memorySpot.push(lineNumber);
       LineTermination;
     }
   }
