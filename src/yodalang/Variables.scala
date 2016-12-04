@@ -24,7 +24,8 @@ class Variables {
   }
 
   // Removes selected scope to represent local variable removal
-  def removeScope() = {
+  def removeScope(i: Int) = {
+    variablesScope.remove(i);
   }
 
   // Returns correct scope; starts from the topmost level and goes to 

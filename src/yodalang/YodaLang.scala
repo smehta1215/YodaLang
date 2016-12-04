@@ -31,6 +31,12 @@ class YodaLang {
   case class AgainExpression(num: Int) extends YodaLine;
   case class StopExpression(num: Int) extends YodaLine;
 
+  // These handle functions
+  case class FunctionStart(num: Int, s: String) extends YodaLine;
+  case class FunctionReturn(v: Any) extends YodaLine;
+  case class FunctionEnd(num: Int) extends YodaLine;
+  case class FunctionCall(fn: String, v: Any) extends YodaLine;
+
   // Variable assignment
   case class Assign(num: Int, fn: Function0[Any]) extends YodaLine;
 
@@ -47,6 +53,10 @@ class YodaLang {
   // Structures that hold line information
   var lines = new HashMap[Int, YodaLine];
   val variables = new Variables;
+  var functionLines = new HashMap[String, Int];
+  var retStack = Stack[String]();
+  var retAnswers = Stack[Any]();
+  var memorySpot = Stack[Int]();
 
   // Evaluates all instructions (runtime) with call Go
   private def gotoLine(line: Int) {
@@ -360,6 +370,67 @@ class YodaLang {
         gotoLine(afterLoopStack.pop());
       }
 
+      case FunctionStart(_, s: String) => {
+        var jump: Int = line;
+        while (!lines(jump).isInstanceOf[FunctionEnd]) {
+          jump += 1;
+        }
+        gotoLine(jump + 1);
+      }
+
+      case FunctionReturn(v: Any) => {
+        v match {
+          case v: Function0[Any] => retAnswers.push(v());
+          // Need to check if string is actually an existing variable
+          case v: String         => retAnswers.push(parseForVar(v));
+          case v                 => retAnswers.push(v);
+        }
+
+        var jump = line
+        while (!lines(jump).isInstanceOf[FunctionEnd]) {
+          jump += 1
+        }
+        gotoLine(jump);
+      }
+
+      case FunctionCall(fn: String, num: Int) => {
+
+        variables.setDepth(variables.getDepth() + 1);
+        variables.createScope();
+        if (functionLines.contains(fn)) {
+          gotoLine(functionLines(fn));
+        } else {
+          println("PROGRAM ERROR");
+        }
+      }
+
+      case FunctionCall(fn: String, v: String) => {
+
+        retStack.push(v);
+        variables.setDepth(variables.getDepth() + 1);
+        variables.createScope();
+        if (functionLines.contains(fn)) {
+          gotoLine(functionLines(fn));
+        } else {
+          println("PROGRAM ERROR");
+        }
+      }
+
+      case FunctionEnd(num: Int) => {
+        var g: Int = memorySpot.pop();
+
+        val retVal: Any = retAnswers.pop();
+        variables.removeScope(variables.getDepth());
+        variables.setDepth(variables.getDepth() - 1);
+
+        if (!retStack.isEmpty) {
+          var setVar: String = retStack.pop();
+          variables.getScope(setVar)(setVar) = retVal;
+        }
+
+        gotoLine(g);
+      }
+
       case End(_) => {};
     }
   }
@@ -439,6 +510,10 @@ class YodaLang {
   abstract sealed class PadawanWord;
   object padawan extends PadawanWord;
 
+  // Marks the use of the word "training"
+  abstract sealed class TrainingWord;
+  object training extends TrainingWord;
+
   // Starts YodaLang program
   object Begin {
     def we(w: WillWord) = {
@@ -506,6 +581,34 @@ class YodaLang {
     }
   }
 
+  // Handles function creation, ending and return
+  object Start {
+    def training(s: String) = {
+      functionLines += s -> (lineNumber + 1);
+      lines(lineNumber) = FunctionStart(lineNumber, s);
+      lineNumber += 1;
+      LineTermination;
+    }
+  }
+
+  object Give {
+    def back(r: Any) = {
+      lines(lineNumber) = FunctionReturn(r);
+      lineNumber += 1;
+      LineTermination;
+    }
+  }
+
+  object Stop {
+    def your(t: TrainingWord) = {
+      lines(lineNumber) = FunctionEnd(lineNumber);
+      lineNumber += 1;
+      LineTermination;
+    }
+  }
+
+  // For function recall see Force object
+
   object LineTermination {
     def you(w: WillWord) = {
       // Potentially change next line features
@@ -514,8 +617,22 @@ class YodaLang {
 
   // Starts off variable assignment, Create is the word that starts 
   // a new variable
+  // Also starts function recall
   object Force {
     def push(s: String) = Assignment(s);
+    def pull(fn: String) = {
+      lines(lineNumber) = FunctionCall(fn, lineNumber);
+      lineNumber += 1;
+      memorySpot.push(lineNumber);
+      LineTermination;
+    }
+    // Make function arguments work for Int/Double as well
+    def pull(fn: String, ret: String) = {
+      lines(lineNumber) = FunctionCall(fn, ret);
+      lineNumber += 1;
+      memorySpot.push(lineNumber);
+      LineTermination;
+    }
   }
 
   // Handles basic add/sub/mul/div operations
