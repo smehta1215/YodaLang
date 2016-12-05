@@ -3,6 +3,8 @@ package yodalang
 import scala.annotation.migration
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Stack
+import scala.math.sin
+import scala.math.toRadians
 // ^^Import lines above^^
 
 class YodaLang {
@@ -37,6 +39,13 @@ class YodaLang {
   case class FunctionEnd(num: Int) extends YodaLine;
   case class FunctionCall(fn: String, v: Any) extends YodaLine;
 
+  // These handle planet and object creation
+  case class MakePlanet(ln: Int, n: String, m: String, r: String) extends YodaLine;
+  case class ForceStore(ln: Int, p1: String, p2: String, d: String, v: String) extends YodaLine;
+  case class ItemStorage(ln: Int, name: String, m: Double) extends YodaLine;
+  case class ItemForceCalc(item: String, planet: String, v: String) extends YodaLine;
+  case class GrabItemFunction(ln: Int, name: String, planet: String, angle: Int, v: String) extends YodaLine;
+
   // Variable assignment
   case class Assign(num: Int, fn: Function0[Any]) extends YodaLine;
 
@@ -57,6 +66,12 @@ class YodaLang {
   var retStack = Stack[String]();
   var retAnswers = Stack[Any]();
   var memorySpot = Stack[Int]();
+
+  // Structures for object information
+
+  // Planets array is name -> {mass, radius of planet}
+  var planets = new HashMap[String, Array[String]];
+  var items = new HashMap[String, Double];
 
   // Evaluates all instructions (runtime) with call Go
   private def gotoLine(line: Int) {
@@ -431,6 +446,51 @@ class YodaLang {
         gotoLine(g);
       }
 
+      case MakePlanet(_, n: String, m: String, r: String) => {
+        var planet_info: Array[String] = new Array[String](3);
+        planet_info(0) = m;
+        planet_info(1) = r;
+        planets += n -> planet_info;
+        planets(n)(2) = calc_grav_accel(planets(n)(0), planets(n)(1));
+
+        gotoLine(line + 1);
+      }
+
+      case ForceStore(_, p1: String, p2: String, d: String, v: String) => {
+        var answer: String = calc_planets_force(p1, p2, d);
+        variables.set(v, answer);
+        gotoLine(line + 1);
+      }
+
+      case ItemStorage(_, name: String, m: Double) => {
+        items += name -> m;
+        gotoLine(line + 1);
+      }
+
+      case ItemForceCalc(item: String, planet: String, v: String) => {
+        var mass: Double = items(item);
+        var grav_base: Double = parse_scient_not(planets(planet)(2))(0).asInstanceOf[Double];
+        var grav_exp: Int = parse_scient_not(planets(planet)(2))(1).asInstanceOf[Int];
+
+        var force_base = mass * grav_base;
+
+        variables.set(v, "" + force_base + "x10^" + grav_exp);
+        gotoLine(line + 1);
+      }
+
+      case GrabItemFunction(_, name: String, planet: String, angle: Int, v: String) => {
+        var mass: Double = items(name);
+        var grav_base: Double = parse_scient_not(planets(planet)(2))(0).asInstanceOf[Double];
+        var grav_exp: Int = parse_scient_not(planets(planet)(2))(1).asInstanceOf[Int];
+
+        var angleMultiplier: Double = sin(toRadians(angle));
+
+        var force_base = mass * grav_base * angleMultiplier;
+
+        variables.set(v, "" + force_base + "x10^" + grav_exp);
+        gotoLine(line + 1);
+      }
+
       case End(_) => {};
     }
   }
@@ -462,6 +522,19 @@ class YodaLang {
     }
 
     return newString;
+  }
+
+  case class PlanetCreation(n: String, m: String) {
+    def radius(r: String) = {
+      lines(lineNumber) = MakePlanet(lineNumber, n, m, r);
+      lineNumber += 1;
+      LineTermination;
+    }
+  }
+
+  // Assignment of planet info
+  case class PlanetAssignment(s: String) {
+    def mass(m: String) = PlanetCreation(s, m);
   }
 
   // Assignment of variables
@@ -514,12 +587,84 @@ class YodaLang {
   abstract sealed class TrainingWord;
   object training extends TrainingWord;
 
+  abstract sealed class MustWord;
+  object must extends MustWord;
+
+  def parse_scient_not(p: String): Array[Any] = {
+    // r(0) is base, r(1) is exponent
+    var r: Array[Any] = new Array[Any](2);
+    var parsed: Array[String] = p.split("x");
+
+    r(0) = parsed(0).toDouble;
+
+    var e_string = parsed(1).substring(3);
+
+    r(1) = e_string.toInt;
+
+    return r;
+  }
+
+  def calc_planets_force(p1: String, p2: String, d: String): String = {
+    var m1 = parse_scient_not(planets(p1)(0));
+    var m2 = parse_scient_not(planets(p2)(0));
+    var distance = parse_scient_not(d);
+
+    var base: Double = (6.67 * m1(0).asInstanceOf[Double] * m2(0).asInstanceOf[Double]) / (distance(0).asInstanceOf[Double] * distance(0).asInstanceOf[Double]);
+    var exp: Int = m1(1).asInstanceOf[Int] + m2(1).asInstanceOf[Int] - distance(1).asInstanceOf[Int] - distance(1).asInstanceOf[Int] - 11;
+
+    return "" + base + "x10" + exp;
+  }
+
+  def calc_grav_accel(mass: String, radius: String): String = {
+    var m = parse_scient_not(mass);
+    var r = parse_scient_not(radius);
+
+    var base: Double = ((6.67) * m(0).asInstanceOf[Double]) / (r(0).asInstanceOf[Double] * r(0).asInstanceOf[Double]);
+
+    var exp: Int = m(1).asInstanceOf[Int] - r(1).asInstanceOf[Int] - r(1).asInstanceOf[Int] - 11;
+
+    return "" + base + "x10^" + exp;
+  }
+
   // Starts YodaLang program
   object Begin {
     def we(w: WillWord) = {
+      var earth_info: Array[String] = new Array[String](3);
+      earth_info(0) = "5.92x10^24";
+      earth_info(1) = "6.38x10^6"
+      planets += "Earth" -> earth_info;
+      planets("Earth")(2) = calc_grav_accel(planets("Earth")(0), planets("Earth")(1));
+
+      //      println(calc_grav_accel(planets("Earth")(0), planets("Earth")(1)) + " m/s^2");
+
       lines = new HashMap[Int, YodaLine];
       variables.setDepth(variables.getDepth() + 1);
       variables.createScope();
+    }
+  }
+
+  object Make {
+    def planet(s: String) = PlanetAssignment(s);
+
+    def item(s: String) = ItemAssignment(s);
+  }
+
+  case class ItemAssignment(name: String) {
+    // For really large objects
+    //    def mass(z: String) = {
+    //
+    //      LineTermination;
+    //    }
+    def mass(z: Any) = {
+      var a: Double = 0;
+      if (z.isInstanceOf[Int]) {
+        a = z.asInstanceOf[Int] / 1.0;
+      } else {
+        a = z.asInstanceOf[Double] / 1.0;
+      }
+      lines(lineNumber) = ItemStorage(lineNumber, name, a.toDouble);
+      lineNumber += 1;
+      LineTermination;
     }
   }
 
@@ -613,6 +758,27 @@ class YodaLang {
     def you(w: WillWord) = {
       // Potentially change next line features
     }
+    def you(m: MustWord) = {
+
+    }
+  }
+
+  // Loads up second planet
+  case class SecondPlanet(p1: String) {
+    def and(p2: String) = PlanetDistance(p1, p2);
+  }
+
+  // Loads up distance between two planets
+  case class PlanetDistance(p1: String, p2: String) {
+    def distance(d: String) = ForceStorage(p1, p2, d);
+  }
+
+  case class ForceStorage(p1: String, p2: String, d: String) {
+    def variable(v: String) = {
+      lines(lineNumber) = ForceStore(lineNumber, p1, p2, d, v);
+      lineNumber += 1;
+      LineTermination;
+    }
   }
 
   // Starts off variable assignment, Create is the word that starts 
@@ -631,6 +797,40 @@ class YodaLang {
       lines(lineNumber) = FunctionCall(fn, ret);
       lineNumber += 1;
       memorySpot.push(lineNumber);
+      LineTermination;
+    }
+
+    def grab(item: String) = GrabItem(item);
+
+    def planet(p1: String) = SecondPlanet(p1);
+
+    def gravitational(item: String) = ItemForce(item);
+  }
+
+  case class GrabItem(item: String) {
+    def on(planet: String) = ItemAngle(item, planet);
+  }
+
+  case class ItemAngle(item: String, planet: String) {
+    def angle(a: Int) = ItemVarStorage(item, planet, a);
+  }
+
+  case class ItemVarStorage(item: String, planet: String, angle: Int) {
+    def variable(v: String) = {
+      lines(lineNumber) = GrabItemFunction(lineNumber, item, planet, angle, v);
+      lineNumber += 1;
+      LineTermination;
+    }
+  }
+
+  case class ItemForce(item: String) {
+    def on(planet: String) = ItemForceStorage(item, planet);
+  }
+
+  case class ItemForceStorage(item: String, planet: String) {
+    def variable(v: String) = {
+      lines(lineNumber) = ItemForceCalc(item, planet, v);
+      lineNumber += 1;
       LineTermination;
     }
   }
