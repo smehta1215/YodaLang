@@ -9,11 +9,11 @@ object Test03 extends YodaLang {
      Jedi path (11 equal_to 10)
       Show me "statement" you will
       
-      Jedi path (3 equal_to 3)
-        Show me "statement7" you will
-      Take Sith path
-        Show me "statement8" you will
-      Restore the balance you will
+//      Jedi path (3 equal_to 3)
+//        Show me "statement7" you will
+//      Take Sith path
+//        Show me "statement8" you will
+//      Restore the balance you will
       
       Show me "statement2" you will
     Take Sith path

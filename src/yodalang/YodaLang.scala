@@ -37,7 +37,7 @@ class YodaLang {
   case class FunctionStart(num: Int, s: String) extends YodaLine;
   case class FunctionReturn(v: Any) extends YodaLine;
   case class FunctionEnd(num: Int) extends YodaLine;
-  case class FunctionCall(fn: String, v: Any) extends YodaLine;
+  case class FunctionCall(ln: Int, fn: String, v: Any) extends YodaLine;
 
   // These handle planet and object creation
   case class MakePlanet(ln: Int, n: String, m: String, r: String) extends YodaLine;
@@ -339,7 +339,9 @@ class YodaLang {
           if (lines(line + corrElse).isInstanceOf[ElseMarker]) {
             lines(line + corrElse) = ElseMarker(line + corrElse, true);
             gotoLine(line + corrElse);
+            //            gotoLine(line + corrElse + 1);
           } else {
+            lines(line + corrElse) = ElseMarker(line + corrElse, false);
             gotoLine(line + corrElse);
           }
         }
@@ -348,10 +350,9 @@ class YodaLang {
       case ElseMarker(_, b: Boolean) => {
         var jumpToClose: Boolean = false;
         if (b) {
+          lines(line) = ElseMarker(line, false);
           gotoLine(line + 1);
-        } // Else go to next close statement, account for other If 
-        // expressions
-        else {
+        } else {
           var corrClose: Int = 1;
           while (!lines(line + corrClose).isInstanceOf[CloseIfExpression] || jumpToClose) {
             if (lines(line + corrClose).isInstanceOf[IfExpression]) {
@@ -408,8 +409,8 @@ class YodaLang {
         gotoLine(jump);
       }
 
-      case FunctionCall(fn: String, num: Int) => {
-
+      case FunctionCall(ln: Int, fn: String, num: Int) => {
+        memorySpot.push(ln + 1);
         variables.setDepth(variables.getDepth() + 1);
         variables.createScope();
         if (functionLines.contains(fn)) {
@@ -419,8 +420,8 @@ class YodaLang {
         }
       }
 
-      case FunctionCall(fn: String, v: String) => {
-
+      case FunctionCall(ln: Int, fn: String, v: String) => {
+        memorySpot.push(ln + 1);
         retStack.push(v);
         variables.setDepth(variables.getDepth() + 1);
         variables.createScope();
@@ -444,6 +445,7 @@ class YodaLang {
         }
 
         gotoLine(g);
+
       }
 
       case MakePlanet(_, n: String, m: String, r: String) => {
@@ -612,7 +614,7 @@ class YodaLang {
     var base: Double = (6.67 * m1(0).asInstanceOf[Double] * m2(0).asInstanceOf[Double]) / (distance(0).asInstanceOf[Double] * distance(0).asInstanceOf[Double]);
     var exp: Int = m1(1).asInstanceOf[Int] + m2(1).asInstanceOf[Int] - distance(1).asInstanceOf[Int] - distance(1).asInstanceOf[Int] - 11;
 
-    return "" + base + "x10" + exp;
+    return "" + base + "x10^" + exp;
   }
 
   def calc_grav_accel(mass: String, radius: String): String = {
@@ -698,7 +700,7 @@ class YodaLang {
 
   object Take {
     def Sith(p: PathWord) = {
-      lines(lineNumber) = ElseMarker(lineNumber);
+      lines(lineNumber) = ElseMarker(lineNumber, false);
       lineNumber += 1;
     }
   }
@@ -787,16 +789,18 @@ class YodaLang {
   object Force {
     def push(s: String) = Assignment(s);
     def pull(fn: String) = {
-      lines(lineNumber) = FunctionCall(fn, lineNumber);
+      //            memorySpot.push(lineNumber);
+      lines(lineNumber) = FunctionCall(lineNumber, fn, lineNumber);
       lineNumber += 1;
-      memorySpot.push(lineNumber);
+
       LineTermination;
     }
     // Make function arguments work for Int/Double as well
     def pull(fn: String, ret: String) = {
-      lines(lineNumber) = FunctionCall(fn, ret);
+      //            memorySpot.push(lineNumber + 1);
+      lines(lineNumber) = FunctionCall(lineNumber, fn, ret);
       lineNumber += 1;
-      memorySpot.push(lineNumber);
+
       LineTermination;
     }
 

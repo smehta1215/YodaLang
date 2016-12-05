@@ -10,10 +10,10 @@ object Test05 extends YodaLang {
     Force push "y" as 5 you will
 
     Start training "exercise_1" you will
-    Show me "Inside function call" you will
-    Force push "x" as 2 you will
-    Show me "v|x here" you will
-    Give back "v|x" you will
+      Show me "Inside function call" you will
+      Force push "x" as 2 you will
+      Show me "v|x here" you will
+      Give back "v|x" you will
     Stop your training you will
 
     Show me "This is before the function call" you will
