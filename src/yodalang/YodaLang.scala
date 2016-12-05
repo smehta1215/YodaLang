@@ -3,6 +3,8 @@ package yodalang
 import scala.annotation.migration
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.Stack
+import scala.math.sin
+import scala.math.toRadians
 // ^^Import lines above^^
 
 class YodaLang {
@@ -40,6 +42,9 @@ class YodaLang {
   // These handle planet and object creation
   case class MakePlanet(ln: Int, n: String, m: String, r: String) extends YodaLine;
   case class ForceStore(ln: Int, p1: String, p2: String, d: String, v: String) extends YodaLine;
+  case class ItemStorage(ln: Int, name: String, m: Double) extends YodaLine;
+  case class ItemForceCalc(item: String, planet: String, v: String) extends YodaLine;
+  case class GrabItemFunction(ln: Int, name: String, planet: String, angle: Int, v: String) extends YodaLine;
 
   // Variable assignment
   case class Assign(num: Int, fn: Function0[Any]) extends YodaLine;
@@ -66,6 +71,7 @@ class YodaLang {
 
   // Planets array is name -> {mass, radius of planet}
   var planets = new HashMap[String, Array[String]];
+  var items = new HashMap[String, Double];
 
   // Evaluates all instructions (runtime) with call Go
   private def gotoLine(line: Int) {
@@ -456,6 +462,35 @@ class YodaLang {
         gotoLine(line + 1);
       }
 
+      case ItemStorage(_, name: String, m: Double) => {
+        items += name -> m;
+        gotoLine(line + 1);
+      }
+
+      case ItemForceCalc(item: String, planet: String, v: String) => {
+        var mass: Double = items(item);
+        var grav_base: Double = parse_scient_not(planets(planet)(2))(0).asInstanceOf[Double];
+        var grav_exp: Int = parse_scient_not(planets(planet)(2))(1).asInstanceOf[Int];
+
+        var force_base = mass * grav_base;
+
+        variables.set(v, "" + force_base + "x10^" + grav_exp);
+        gotoLine(line + 1);
+      }
+
+      case GrabItemFunction(_, name: String, planet: String, angle: Int, v: String) => {
+        var mass: Double = items(name);
+        var grav_base: Double = parse_scient_not(planets(planet)(2))(0).asInstanceOf[Double];
+        var grav_exp: Int = parse_scient_not(planets(planet)(2))(1).asInstanceOf[Int];
+
+        var angleMultiplier: Double = sin(toRadians(angle));
+
+        var force_base = mass * grav_base * angleMultiplier;
+
+        variables.set(v, "" + force_base + "x10^" + grav_exp);
+        gotoLine(line + 1);
+      }
+
       case End(_) => {};
     }
   }
@@ -610,6 +645,27 @@ class YodaLang {
 
   object Make {
     def planet(s: String) = PlanetAssignment(s);
+
+    def item(s: String) = ItemAssignment(s);
+  }
+
+  case class ItemAssignment(name: String) {
+    // For really large objects
+    //    def mass(z: String) = {
+    //
+    //      LineTermination;
+    //    }
+    def mass(z: Any) = {
+      var a: Double = 0;
+      if (z.isInstanceOf[Int]) {
+        a = z.asInstanceOf[Int] / 1.0;
+      } else {
+        a = z.asInstanceOf[Double] / 1.0;
+      }
+      lines(lineNumber) = ItemStorage(lineNumber, name, a.toDouble);
+      lineNumber += 1;
+      LineTermination;
+    }
   }
 
   // Ends YodaLang program
@@ -744,7 +800,39 @@ class YodaLang {
       LineTermination;
     }
 
+    def grab(item: String) = GrabItem(item);
+
     def planet(p1: String) = SecondPlanet(p1);
+
+    def gravitational(item: String) = ItemForce(item);
+  }
+
+  case class GrabItem(item: String) {
+    def on(planet: String) = ItemAngle(item, planet);
+  }
+
+  case class ItemAngle(item: String, planet: String) {
+    def angle(a: Int) = ItemVarStorage(item, planet, a);
+  }
+
+  case class ItemVarStorage(item: String, planet: String, angle: Int) {
+    def variable(v: String) = {
+      lines(lineNumber) = GrabItemFunction(lineNumber, item, planet, angle, v);
+      lineNumber += 1;
+      LineTermination;
+    }
+  }
+
+  case class ItemForce(item: String) {
+    def on(planet: String) = ItemForceStorage(item, planet);
+  }
+
+  case class ItemForceStorage(item: String, planet: String) {
+    def variable(v: String) = {
+      lines(lineNumber) = ItemForceCalc(item, planet, v);
+      lineNumber += 1;
+      LineTermination;
+    }
   }
 
   // Handles basic add/sub/mul/div operations
