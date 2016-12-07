@@ -8,7 +8,7 @@ object GrabSaberDemo extends YodaLang {
 
     Make item "light saber" mass 4 you must
     Make planet "Hoth" mass "6.39x10^23" radius "3.4x10^5" you must
-    Force gravitational "light saber" on "Earth" variable "z" you must
+    Force gravitational "light saber" on "Hoth" variable "z" you must
 
     Show me "v|z Newtons to pull the saber up!" you will
 
