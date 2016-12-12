@@ -108,9 +108,11 @@ class YodaLang {
         var nv: Any = 0;
         if (extractVal(s).isInstanceOf[Int]) {
           nv = extractVal(s).asInstanceOf[Int] + v;
-        }
-        if (extractVal(s).isInstanceOf[Double]) {
+        } else if (extractVal(s).isInstanceOf[Double]) {
           nv = extractVal(s).asInstanceOf[Double] + v;
+        } else {
+          println("Type error!");
+          System.exit(1);
         }
 
         variables.set(s, nv);
@@ -126,6 +128,9 @@ class YodaLang {
           } else {
             nv = extractVal(s).asInstanceOf[Int] + v;
           }
+        } else {
+          println("Type error!");
+          System.exit(1);
         }
 
         variables.set(s, nv);
@@ -141,14 +146,22 @@ class YodaLang {
             nv = extractVal(s).asInstanceOf[Int] + extractVal(v).asInstanceOf[Int];
           } else if (extractVal(v).isInstanceOf[Double]) {
             nv = extractVal(s).asInstanceOf[Int] + extractVal(v).asInstanceOf[Double];
+          } else {
+            println("Type error!");
+            System.exit(1);
           }
-        }
-        if (extractVal(s).isInstanceOf[Double]) {
+        } else if (extractVal(s).isInstanceOf[Double]) {
           if (extractVal(v).isInstanceOf[Int]) {
             nv = extractVal(s).asInstanceOf[Double] + extractVal(v).asInstanceOf[Int];
           } else if (extractVal(v).isInstanceOf[Double]) {
             nv = extractVal(s).asInstanceOf[Double] + extractVal(v).asInstanceOf[Double];
+          } else {
+            println("Type error!");
+            System.exit(1);
           }
+        } else {
+          println("Type error!");
+          System.exit(1);
         }
 
         variables.set(s, nv);
@@ -160,9 +173,11 @@ class YodaLang {
         var nv: Any = 0;
         if (extractVal(s).isInstanceOf[Int]) {
           nv = extractVal(s).asInstanceOf[Int] - v;
-        }
-        if (extractVal(s).isInstanceOf[Double]) {
+        } else if (extractVal(s).isInstanceOf[Double]) {
           nv = extractVal(s).asInstanceOf[Double] - v;
+        } else {
+          println("Type error!");
+          System.exit(1);
         }
 
         variables.set(s, nv);
@@ -180,6 +195,9 @@ class YodaLang {
           } else {
             nv = extractVal(s).asInstanceOf[Int] - v;
           }
+        } else {
+          println("Type error!");
+          System.exit(1);
         }
 
         variables.set(s, nv);
@@ -195,14 +213,22 @@ class YodaLang {
             nv = extractVal(s).asInstanceOf[Int] - extractVal(v).asInstanceOf[Int];
           } else if (extractVal(v).isInstanceOf[Double]) {
             nv = extractVal(s).asInstanceOf[Int] - extractVal(v).asInstanceOf[Double];
+          } else {
+            println("Type error!");
+            System.exit(1);
           }
-        }
-        if (extractVal(s).isInstanceOf[Double]) {
+        } else if (extractVal(s).isInstanceOf[Double]) {
           if (extractVal(v).isInstanceOf[Int]) {
             nv = extractVal(s).asInstanceOf[Double] - extractVal(v).asInstanceOf[Int];
           } else if (extractVal(v).isInstanceOf[Double]) {
             nv = extractVal(s).asInstanceOf[Double] - extractVal(v).asInstanceOf[Double];
+          } else {
+            println("Type error!");
+            System.exit(1);
           }
+        } else {
+          println("Type error!");
+          System.exit(1);
         }
 
         variables.set(s, nv);
@@ -214,9 +240,11 @@ class YodaLang {
         var nv: Any = 1;
         if (extractVal(s).isInstanceOf[Int]) {
           nv = extractVal(s).asInstanceOf[Int] * v;
-        }
-        if (extractVal(s).isInstanceOf[Double]) {
+        } else if (extractVal(s).isInstanceOf[Double]) {
           nv = extractVal(s).asInstanceOf[Double] * v;
+        } else {
+          println("Type error!");
+          System.exit(1);
         }
 
         variables.set(s, nv);
@@ -232,6 +260,9 @@ class YodaLang {
           } else {
             nv = extractVal(s).asInstanceOf[Int] * v;
           }
+        } else {
+          println("Type error!");
+          System.exit(1);
         }
 
         variables.set(s, nv);
@@ -247,14 +278,22 @@ class YodaLang {
             nv = extractVal(s).asInstanceOf[Int] * extractVal(v).asInstanceOf[Int];
           } else if (extractVal(v).isInstanceOf[Double]) {
             nv = extractVal(s).asInstanceOf[Int] * extractVal(v).asInstanceOf[Double];
+          } else {
+            println("Type error!");
+            System.exit(1);
           }
-        }
-        if (extractVal(s).isInstanceOf[Double]) {
+        } else if (extractVal(s).isInstanceOf[Double]) {
           if (extractVal(v).isInstanceOf[Int]) {
             nv = extractVal(s).asInstanceOf[Double] * extractVal(v).asInstanceOf[Int];
           } else if (extractVal(v).isInstanceOf[Double]) {
             nv = extractVal(s).asInstanceOf[Double] * extractVal(v).asInstanceOf[Double];
+          } else {
+            println("Type error!");
+            System.exit(1);
           }
+        } else {
+          println("Type error!");
+          System.exit(1);
         }
 
         variables.set(s, nv);
@@ -266,9 +305,11 @@ class YodaLang {
         var nv: Any = 1;
         if (extractVal(s).isInstanceOf[Int]) {
           nv = extractVal(s).asInstanceOf[Int] / v;
-        }
-        if (extractVal(s).isInstanceOf[Double]) {
+        } else if (extractVal(s).isInstanceOf[Double]) {
           nv = extractVal(s).asInstanceOf[Double] / v;
+        } else {
+          println("Type error!");
+          System.exit(1);
         }
 
         variables.set(s, nv);
@@ -284,6 +325,9 @@ class YodaLang {
           } else {
             nv = extractVal(s).asInstanceOf[Int] / v;
           }
+        } else {
+          println("Type error!");
+          System.exit(1);
         }
 
         variables.set(s, nv);
@@ -299,14 +343,22 @@ class YodaLang {
             nv = extractVal(s).asInstanceOf[Int] / extractVal(v).asInstanceOf[Int];
           } else if (extractVal(v).isInstanceOf[Double]) {
             nv = extractVal(s).asInstanceOf[Int] / extractVal(v).asInstanceOf[Double];
+          } else {
+            println("Type error!");
+            System.exit(1);
           }
-        }
-        if (extractVal(s).isInstanceOf[Double]) {
+        } else if (extractVal(s).isInstanceOf[Double]) {
           if (extractVal(v).isInstanceOf[Int]) {
             nv = extractVal(s).asInstanceOf[Double] / extractVal(v).asInstanceOf[Int];
           } else if (extractVal(v).isInstanceOf[Double]) {
             nv = extractVal(s).asInstanceOf[Double] / extractVal(v).asInstanceOf[Double];
+          } else {
+            println("Type error!");
+            System.exit(1);
           }
+        } else {
+          println("Type error!");
+          System.exit(1);
         }
 
         variables.set(s, nv);
@@ -476,6 +528,17 @@ class YodaLang {
 
         var force_base = mass * grav_base;
 
+        // Will create proper scientific notation
+        while (force_base.abs >= 10 || force_base.abs < 1) {
+          if (force_base.abs >= 10) {
+            force_base /= 10;
+            grav_exp += 1;
+          } else {
+            force_base *= 10;
+            grav_exp -= 1;
+          }
+        }
+
         variables.set(v, "" + force_base + "x10^" + grav_exp);
         gotoLine(line + 1);
       }
@@ -488,6 +551,16 @@ class YodaLang {
         var angleMultiplier: Double = sin(toRadians(angle));
 
         var force_base = mass * grav_base * angleMultiplier;
+
+        while (force_base.abs >= 10 || force_base.abs < 1) {
+          if (force_base.abs >= 10) {
+            force_base /= 10;
+            grav_exp += 1;
+          } else {
+            force_base *= 10;
+            grav_exp -= 1;
+          }
+        }
 
         variables.set(v, "" + force_base + "x10^" + grav_exp);
         gotoLine(line + 1);
@@ -614,6 +687,16 @@ class YodaLang {
     var base: Double = (6.67 * m1(0).asInstanceOf[Double] * m2(0).asInstanceOf[Double]) / (distance(0).asInstanceOf[Double] * distance(0).asInstanceOf[Double]);
     var exp: Int = m1(1).asInstanceOf[Int] + m2(1).asInstanceOf[Int] - distance(1).asInstanceOf[Int] - distance(1).asInstanceOf[Int] - 11;
 
+    while (base.abs >= 10 || base.abs < 1) {
+      if (base.abs >= 10) {
+        base /= 10;
+        exp += 1;
+      } else {
+        base *= 10;
+        exp -= 1;
+      }
+    }
+
     return "" + base + "x10^" + exp;
   }
 
@@ -624,6 +707,16 @@ class YodaLang {
     var base: Double = ((6.67) * m(0).asInstanceOf[Double]) / (r(0).asInstanceOf[Double] * r(0).asInstanceOf[Double]);
 
     var exp: Int = m(1).asInstanceOf[Int] - r(1).asInstanceOf[Int] - r(1).asInstanceOf[Int] - 11;
+
+    while (base.abs >= 10 || base.abs < 1) {
+      if (base.abs >= 10) {
+        base /= 10;
+        exp += 1;
+      } else {
+        base *= 10;
+        exp -= 1;
+      }
+    }
 
     return "" + base + "x10^" + exp;
   }
